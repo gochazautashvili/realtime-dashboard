@@ -10,8 +10,7 @@ import KanbarItem from "@/components/tasks/kanban/item";
 import { KanbanAddCardButton } from "@/components/tasks/kanban/KanbanAddCardButton";
 import { UPDATE_TASK_STAGE_MUTATION } from "@/graphql/mutations";
 import { TASK_STAGES_QUERY, TASKS_QUERY } from "@/graphql/queries";
-import { TaskStage } from "@/graphql/schema.types";
-import { TasksQuery } from "@/graphql/types";
+import { TasksQuery, TaskStagesQuery } from "@/graphql/types";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useList, useNavigation, useUpdate } from "@refinedev/core";
 import { GetFieldsFromList } from "@refinedev/nestjs-query";
@@ -20,6 +19,9 @@ import { ReactNode, useMemo } from "react";
 interface Props {
   children: ReactNode;
 }
+
+type Task = GetFieldsFromList<TasksQuery>;
+type TaskStage = GetFieldsFromList<TaskStagesQuery> & { tasks: Task[] };
 
 const TaskList = ({ children }: Props) => {
   const { replace } = useNavigation();
@@ -61,16 +63,16 @@ const TaskList = ({ children }: Props) => {
 
     const unassignedStage = tasks.data.filter((task) => task.stageId === null);
 
-    const grounded: TaskStage[] = stages.data.map((stage) => ({
+    const grouped: TaskStage[] = stages.data.map((stage) => ({
       ...stage,
-      tasks: tasks.data.filter(
-        (task) => task?.stageId?.toString() === stage.id
-      ),
+      tasks: tasks.data.filter((task) => task.stageId?.toString() === stage.id),
+      id: stage.id as string,
+      title: stage.title,
     }));
 
     return {
       unassignedStage,
-      columns: grounded,
+      columns: grouped,
     };
   }, [stages, tasks]);
 
